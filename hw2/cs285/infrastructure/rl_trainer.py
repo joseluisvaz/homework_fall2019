@@ -168,7 +168,7 @@ class RL_Trainer(object):
 
         return paths, envsteps_this_batch, train_video_paths
 
-    def train_agent(self):if
+    def train_agent(self):
         print('\nTraining agent using sampled data from replay buffer...')
         for train_step in range(self.params['num_agent_train_steps_per_iter']):
             ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch = \
