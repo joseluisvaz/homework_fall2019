@@ -2,3 +2,8 @@
 cs285.egg-info/
 __pycache__/
 data/
+
+hw1/venv
+hw2/venv
+hw3/venv
+hw4/venv

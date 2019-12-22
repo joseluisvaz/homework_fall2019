@@ -5,7 +5,8 @@ import os
 ############################################
 
 
-def build_mlp(input_placeholder, output_size, scope, n_layers, size, activation=tf.tanh, output_activation=None):
+def build_mlp(input_placeholder, output_size, scope, n_layers,
+              size, activation=tf.tanh, output_activation=None):
     """
         Builds a feedforward neural network
 
@@ -25,9 +26,12 @@ def build_mlp(input_placeholder, output_size, scope, n_layers, size, activation=
     """
     output_placeholder = input_placeholder
     with tf.variable_scope(scope):
+        # TODO whats a reasonable size for the middle layers
         for _ in range(n_layers):
-            output_placeholder = TODO # HINT: use tf.layers.dense (specify <input>, <size>, activation=<?>)
-        output_placeholder = TODO # HINT: use tf.layers.dense (specify <input>, <size>, activation=<?>)
+            output_placeholder = tf.layers.dense(output_placeholder, size,
+                                                 activation) 
+        output_placeholder = tf.layers.dense(output_placeholder, output_size,
+                                             output_activation)
     return output_placeholder
 
 
@@ -35,7 +39,8 @@ def build_mlp(input_placeholder, output_size, scope, n_layers, size, activation=
 ############################################
 
 
-def create_tf_session(use_gpu, gpu_frac=0.6, allow_gpu_growth=True, which_gpu=0):
+def create_tf_session(use_gpu, gpu_frac=0.6,
+                      allow_gpu_growth=True, which_gpu=0):
     if use_gpu:
         # gpu options
         gpu_options = tf.GPUOptions(
@@ -57,6 +62,7 @@ def create_tf_session(use_gpu, gpu_frac=0.6, allow_gpu_growth=True, which_gpu=0)
     # use config to create TF session
     sess = tf.Session(config=config)
     return sess
+
 
 def lrelu(x, leak=0.2):
     f1 = 0.5 * (1 + leak)

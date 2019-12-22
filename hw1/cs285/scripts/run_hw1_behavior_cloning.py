@@ -107,13 +107,13 @@ def main():
     if not(os.path.exists(logdir)):
         os.makedirs(logdir)
 
-
     ###################
     ### RUN TRAINING
     ###################
 
     trainer = BC_Trainer(params)
     trainer.run_training_loop()
+
 
 if __name__ == "__main__":
     main()
