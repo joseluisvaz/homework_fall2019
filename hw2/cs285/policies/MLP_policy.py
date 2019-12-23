@@ -17,6 +17,7 @@ class MLPPolicy(BasePolicy):
         policy_scope='policy_vars',
         discrete=False, # unused for now
         nn_baseline=False, # unused for now
+        use_gae=False,
         **kwargs):
         super().__init__(**kwargs)
 
@@ -27,6 +28,7 @@ class MLPPolicy(BasePolicy):
         self.n_layers = n_layers
         self.discrete = discrete
         self.size = size
+        self.use_gae = use_gae
         self.learning_rate = learning_rate
         self.training = training
         self.nn_baseline = nn_baseline
@@ -147,8 +149,7 @@ class MLPPolicySL(MLPPolicy):
         predicted_actions = self.sample_ac
         # Using mean_squared error because we are doing unsupervised learning,
         # we are doing regression
-        self.loss = tf.losses.mean_squared_error(true_actions,
-                                                 predicted_actions)
+        self.loss = tf.losses.mean_squared_error(true_actions, predicted_actions)
         self.train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss)
 
     def update(self, observations, actions):
@@ -198,20 +199,20 @@ class MLPPolicyPG(MLPPolicy):
             # to get [Q_t - b_t]
         # HINT4: don't forget that we need to MINIMIZE this self.loss
             # but the equation above is something that should be maximized
-        self.loss = tf.reduce_sum(TODO)
+        self.loss = tf.reduce_sum(-self.logprob_n * self.adv_n)
 
         # TODO: define what exactly the optimizer should minimize when updating the policy
-        self.train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(TODO)
+        self.train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss)
 
         if self.nn_baseline:
             # TODO: define the loss that should be optimized for training the baseline
             # HINT1: use tf.losses.mean_squared_error, similar to SL loss from hw1
             # HINT2: we want predictions (self.baseline_prediction) to be as close as possible to the labels (self.targets_n)
                 # see 'update' function below if you don't understand what's inside self.targets_n
-            self.baseline_loss = TODO
+            self.baseline_loss = tf.losses.mean_squared_error(self.targets_n, self.baseline_prediction)
 
             # TODO: define what exactly the optimizer should minimize when updating the baseline
-            self.baseline_update_op = tf.train.AdamOptimizer(self.learning_rate).minimize(TODO)
+            self.baseline_update_op = tf.train.AdamOptimizer(self.learning_rate).minimize(self.baseline_loss)
 
     #########################
 
@@ -221,18 +222,30 @@ class MLPPolicyPG(MLPPolicy):
         # HINT1: query it with observation(s) to get the baseline value(s)
         # HINT2: see build_baseline_forward_pass (above) to see the tensor that we're interested in
         # HINT3: this will be very similar to how you implemented get_action (above)
-        return TODO
+        if len(obs.shape) > 1:
+            observation = obs
+        else:
+            observation = obs[None]
+
+        return self.sess.run(self.baseline_prediction, feed_dict={self.observations_pl: observation})
 
     def update(self, observations, acs_na, adv_n=None, acs_labels_na=None, qvals=None):
         assert(self.training, 'Policy must be created with training=True in order to perform training updates...')
 
-        _, loss = self.sess.run([self.train_op, self.loss], feed_dict={self.observations_pl: observations, self.actions_pl: acs_na, self.adv_n: adv_n})
+        _, loss = self.sess.run([self.train_op, self.loss], feed_dict={self.observations_pl: observations,
+                                                                       self.actions_pl: acs_na, self.adv_n: adv_n})
 
         if self.nn_baseline:
-            targets_n = (qvals - np.mean(qvals))/(np.std(qvals)+1e-8)
+            if not self.use_gae:
+                b_n = qvals - adv_n
+                b_n_normalized = (b_n - np.mean(qvals)) / (np.std(qvals) + 1e-8)
+                targets_n = b_n_normalized
+            else:
+                targets_n = qvals - adv_n
             # TODO: update the nn baseline with the targets_n
             # HINT1: run an op that you built in define_train_op
-            TODO
+            self.sess.run(self.baseline_update_op, feed_dict={self.observations_pl: observations,
+                                                              self.targets_n: targets_n})
         return loss
 
 #####################################################

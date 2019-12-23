@@ -23,6 +23,8 @@ class PG_Trainer(object):
             'standardize_advantages': not(params['dont_standardize_advantages']),
             'reward_to_go': params['reward_to_go'],
             'nn_baseline': params['nn_baseline'],
+            'lambda': params['lambda'],
+            'use_gae': params['use_gae'],
         }
 
         train_args = {
@@ -70,6 +72,8 @@ def main():
     parser.add_argument('--learning_rate', '-lr', type=float, default=5e-3)
     parser.add_argument('--n_layers', '-l', type=int, default=2)
     parser.add_argument('--size', '-s', type=int, default=64)
+    parser.add_argument('--lambda', type=float, default=1.0)
+    parser.add_argument('--use_gae', '-gae', action='store_true')
 
     parser.add_argument('--ep_len', type=int) #students shouldn't change this away from env's default
     parser.add_argument('--seed', type=int, default=1)
