@@ -14,16 +14,16 @@ def calculate_mean_prediction_error(env, action_sequence, models, data_statistic
     true_states = perform_actions(env, action_sequence)['observation']
 
     # predict states using the model and given action sequence and initial state
-    ob = np.expand_dims(true_states[0],0)
+    ob = np.expand_dims(true_states[0], 0)
     pred_states = []
     for ac in action_sequence:
         pred_states.append(ob)
-        action = np.expand_dims(ac,0)
-        ob = # TODO(Q1) Get predicted next state using the model
+        action = np.expand_dims(ac, 0)
+        ob = model.get_prediction(ob, action, data_statistics)
     pred_states = np.squeeze(pred_states)
 
     # Calculate the mean prediction error here
-    mpe = # TODO(Q1)
+    mpe = np.mean(true_states - pred_states)
 
     return mpe, true_states, pred_states
 
@@ -79,6 +79,7 @@ def sample_trajectory(env, policy, max_path_length, render=False, render_mode=('
                 time.sleep(env.model.opt.timestep)
 
         # use the most recent ob to decide what to do
+        # env.render()
         obs.append(ob)
         ac = policy.get_action(ob)
         ac = ac[0]
@@ -116,6 +117,7 @@ def sample_trajectories(env, policy, min_timesteps_per_batch, max_path_length, r
         path = sample_trajectory(env, policy, max_path_length, render, render_mode)
         timesteps_this_batch += get_pathlength(path)
         paths.append(path)
+        print('timesteps: ' + str(timesteps_this_batch) + ' timesteps min: ' + str(min_timesteps_per_batch))
 
     return paths, timesteps_this_batch
 

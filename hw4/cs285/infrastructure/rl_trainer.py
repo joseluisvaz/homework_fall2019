@@ -204,7 +204,7 @@ class RL_Trainer(object):
                                                          self.params['ep_len'])
 
         train_video_paths = None
-        if self.log_video:
+        if self.logvideo:
             print('\nCollecting train rollouts to be used for saving videos...')
             train_video_paths = sample_n_trajectories(self.env, collect_policy,
                                                       MAX_NVIDEO, MAX_VIDEO_LEN, True)
@@ -213,11 +213,13 @@ class RL_Trainer(object):
 
     def train_agent(self):
         print('\nTraining agent using sampled data from replay buffer...')
+        all_loses = []
         for train_step in range(self.params['num_agent_train_steps_per_iter']):
             ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch = \
                 self.agent.sample(self.params['train_batch_size'])
 
-            self.agent.train(ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch)
+            all_loses.append(self.agent.train(ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch))
+        return all_loses
 
     def do_relabel_with_expert(self, expert_policy, paths):
         print("\nRelabelling collected observations with labels from an expert policy...")
